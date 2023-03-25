@@ -2,13 +2,23 @@
 
 A remark plugin that is a replacement for [remark-wiki-link](https://www.npmjs.com/package/remark-wiki-link).
 
+Differences between this and [remark-wiki-link](https://www.npmjs.com/package/remark-wiki-link):
+
+- Supports path segments
+- Supports the [pipe trick](https://en.wikipedia.org/wiki/Help:Pipe_trick)
+- How the `pageResolver` function works
+- Removed `permalinks` option in favor of using `pageResolver` return value.
+
 ## Installation
 
 npm:
+
 ```bash
 npm install remark-wikilinks
 ```
+
 yarn:
+
 ```bash
 yarn add remark-wikilinks
 ```
@@ -56,3 +66,4 @@ function hrefTemplate(permalink, segment) {
 -   `options.newClassName`: A class name that is attached to any rendered wiki links that do not exist. Defaults to `"new"`.
 -   `options.aliasDivider`: A string for page aliases. Defaults to `"|"`
 -   `options.segmentCharacter`: A string that prefixes the page segment. Defaults to `"#"`.
+-   `options.pipeTrickRemove`: A regex that specifies what to remove when using the [pipe trick](https://en.wikipedia.org/wiki/Help:Pipe_trick). Defaults to `/ *([A-Za-z0-9_-]+:|, [A-Za-z0-9_-]+|\([A-Za-z0-9_-]+\)|#[A-Za-z0-9_-]+) */g`.

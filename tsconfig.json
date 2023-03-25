@@ -17,5 +17,5 @@
         "removeComments": true,
         "declaration": true
     },
-    "exclude": ["node_modules", "dist", "rollup.config.js"]
+    "exclude": ["node_modules", "dist", "test", "rollup.config.js"]
 }

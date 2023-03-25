@@ -2,35 +2,26 @@ import { Plugin } from 'unified';
 import { Root } from 'mdast';
 import { findAndReplace } from 'mdast-util-find-and-replace';
 
-interface PageResolution {
+export interface PageResolution {
     slug: string;
     exists: boolean;
 }
 
-interface Options {
+export interface Options {
     pageResolver?: (pageName: string) => PageResolution;
     hrefTemplate?: (slug: string, segment: string) => string;
-    /**
-     * @default ```internal```
-     */
     wikiLinkClassName?: string;
-    /**
-     * @default ```new```
-     */
     newClassName?: string;
-    /**
-     * @default ```|```
-     */
     aliasDivider?: string;
-    /**
-     * @default ```#```
-     */
     segmentCharacter?: string;
+    pipeTrickRemove?: RegExp;
 }
 
-function buildWikilinkRegex(s: string, a: string) {
+function buildWikilinkRegex(uncleanS: string, uncleanA: string) {
+    const s = uncleanS.replace(escapeRegex, '\\$1');
+    const a = uncleanA.replace(escapeRegex, '\\$1');
     return new RegExp(
-        `\\[\\[([^${s}${a}\\]]+)(${s}[^${a}\\]]+)?(${a}[^\\]]+)?\\]\\]`,
+        `\\[\\[([^${s}${a}\\]]+)(${s}[^${a}\\]]+)?(${a}[^\\]]*)?\\]\\]`,
         'g'
     );
 }
@@ -54,14 +45,9 @@ const plugin: Plugin<[Options], Root> = function wikilinks(options = {}) {
     const hrefTemplate = options.hrefTemplate || defaultHrefTemplate;
     const wikiLinkClassName = options.wikiLinkClassName || 'internal';
     const newClassName = options.newClassName || 'new';
-    const aliasDivider = (options.aliasDivider || '|').replace(
-        escapeRegex,
-        '\\$1'
-    );
-    const segmentCharacter = (options.segmentCharacter || '#').replace(
-        escapeRegex,
-        '\\$1'
-    );
+    const aliasDivider = options.aliasDivider || '|';
+    const segmentCharacter = options.segmentCharacter || '#';
+    const pipeTrickRemove = options.pipeTrickRemove || / *([A-Za-z0-9_-]+:|, [A-Za-z0-9_-]+|\([A-Za-z0-9_-]+\)|#[A-Za-z0-9_-]+) */g;
 
     const wikilinkRegex = buildWikilinkRegex(segmentCharacter, aliasDivider);
 
@@ -71,13 +57,17 @@ const plugin: Plugin<[Options], Root> = function wikilinks(options = {}) {
             tree,
             wikilinkRegex,
             (_, title, rawSegment, rawAlias) => {
-                const alias = rawAlias
+                let alias = rawAlias
                     ? rawAlias.substring(aliasDivider.length)
                     : undefined;
                 const segment = rawSegment
                     ? rawSegment.substring(segmentCharacter.length)
                     : '';
                 const page = pageResolver(title);
+
+                if (alias === '') {
+                    alias = title.replace(pipeTrickRemove, '');
+                }
 
                 return {
                     type: 'wikiLink',
